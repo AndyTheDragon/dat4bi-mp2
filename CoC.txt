@@ -1,0 +1,11 @@
+Gruppe 1, Code of conduct for Business intelligence
+
+Navngivning:
+snake_case til variationer af navne
+CamelCase til klassenavne
+Variabler af pandas datatyper afsluttes med '_type' eks. 'white_wine_df'
+Der skal bruges vores egne packages, når vi skriver kode.
+Og hvis der skal skrives den samme flere gange, skal den være lavet til en package.
+GIT PUSH hver gang, inden du lukker ned.
+Der skal bestræbes sig på at holde mængden af koden i hver celle til et minimum.
+Der skal være en markdown efter hver celle for at give en beskrivelse af hvad der sker.
