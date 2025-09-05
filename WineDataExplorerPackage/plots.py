@@ -72,7 +72,7 @@ def show_histograms(df: pd.DataFrame, bins: int = 10, layout: str = "separate", 
                 axes[i].plot(x, p, 'r', linewidth=2)
             axes[i].set_title(f'Histogram of {col}')
             axes[i].set_xlabel(col)
-            axes[i].set_ylabel('Density' if bell_curve else 'Frequency')
+            axes[i].set_ylabel('Frequency')
             axes[i].grid(True)
 
         for j in range(i + 1, len(axes)):
@@ -93,7 +93,7 @@ def show_histograms(df: pd.DataFrame, bins: int = 10, layout: str = "separate", 
                 plt.plot(x, p, 'r', linewidth=2)
             plt.title(f'Histogram of {col}')
             plt.xlabel(col)
-            plt.ylabel("Density" if bell_curve else "Frequency")
+            plt.ylabel("Frequency")
             plt.grid(True)
             plt.tight_layout()
             plt.show()
