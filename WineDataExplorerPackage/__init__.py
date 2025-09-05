@@ -2,7 +2,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-__all__ = ['descriptive_statistics', 'plots']
+__all__ = ['descriptive_statistics', 'plots', 'read_data_to_dataframe', 'combine_dataframes', 'remove_duplicates']
 
 from . import descriptive_statistics, plots
 
@@ -18,9 +18,9 @@ def read_data_to_dataframe(file_path, winetype) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Cleaned DataFrame.
     """
-    df = pd.read_excel(file_path, header=0)
-
-    # TODO: checks for NaN or missing values?
+    df = pd.read_excel(file_path, header=1)
+    # TODO2: determine datatype and use correct read function, e.g., pd.read_csv for CSV files
+    # TODO1: checks for NaN or missing values?
     wine_df = df.apply(pd.to_numeric, errors='coerce')
     wine_df['type'] = winetype
 

@@ -39,7 +39,7 @@ def show_boxplots(df: pd.DataFrame, layout: str = "separate"):
             plt.show()
 
 
-def show_histograms(df: pd.DataFrame, bins: int = 10):
+def show_histograms(df: pd.DataFrame, bins: int = 10, layout: str = "separate"):
     """
     Displays histograms for all numeric columns in the DataFrame.
 
@@ -48,14 +48,32 @@ def show_histograms(df: pd.DataFrame, bins: int = 10):
         bins (int): Number of bins for histograms. Defaults to 10.
     """
     numeric_cols = df.select_dtypes(include="number").columns
-    for col in numeric_cols:
-        plt.figure(figsize=(6, 4))
-        df[col].hist(bins=bins)
-        plt.title(f'Histogram of {col}')
-        plt.xlabel(col)
-        plt.ylabel("Frequency")
+
+    if layout == "grid":
+        n = len(numeric_cols)
+        rows = (n + 2) // 3
+        fig, axes = plt.subplots(rows, 3, figsize=(15, 5 * rows))
+        axes = axes.flatten()
+
+        for i, col in enumerate(numeric_cols):
+            df.hist(column=col, ax=axes[i])
+            axes[i].set_title(f'Histogram of {col}')
+            axes[i].set_ylabel(col)
+
+        for j in range(i + 1, len(axes)):
+            axes[j].axis("off")
+
         plt.tight_layout()
         plt.show()
+    else:
+        for col in numeric_cols:
+            plt.figure(figsize=(6, 4))
+            df[col].hist(bins=bins)
+            plt.title(f'Histogram of {col}')
+            plt.xlabel(col)
+            plt.ylabel("Frequency")
+            plt.tight_layout()
+            plt.show()
 
 
 def show_scatter_matrix(df: pd.DataFrame, figsize: tuple = (12, 12), diagonal: str = "hist"):
