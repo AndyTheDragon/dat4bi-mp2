@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
 import seaborn as sns
@@ -61,11 +62,10 @@ def show_histograms(df: pd.DataFrame, bins: int = 10, layout: str = "separate", 
         axes = axes.flatten()
 
         for i, col in enumerate(numeric_cols):
-            data = df[col].dropna()
-            axes[i].hist(data, bins=bins, density=True, alpha=0.7, color='tab:blue', edgecolor='black')
+            data_df = df[col].dropna()
+            axes[i].hist(data_df, bins=bins, density=True, alpha=0.7, color='tab:blue', edgecolor='black')
             if bell_curve:
-                import numpy as np
-                mu, std = data.mean(), data.std()
+                mu, std = data_df.mean(), data_df.std()
                 xmin, xmax = axes[i].get_xlim()
                 x = np.linspace(xmin, xmax, 100)
                 p = (1/(std * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / std) ** 2)
@@ -83,11 +83,10 @@ def show_histograms(df: pd.DataFrame, bins: int = 10, layout: str = "separate", 
     else:
         for col in numeric_cols:
             plt.figure(figsize=(6, 4))
-            data = df[col].dropna()
-            plt.hist(data, bins=bins, density=True, alpha=0.7, color='tab:blue', edgecolor='black')
+            data_df = df[col].dropna()
+            plt.hist(data_df, bins=bins, density=True, alpha=0.7, color='tab:blue', edgecolor='black')
             if bell_curve:
-                import numpy as np
-                mu, std = data.mean(), data.std()
+                mu, std = data_df.mean(), data_df.std()
                 xmin, xmax = plt.xlim()
                 x = np.linspace(xmin, xmax, 100)
                 p = (1/(std * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / std) ** 2)
