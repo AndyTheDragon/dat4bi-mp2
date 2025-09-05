@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
+import seaborn as sns
 
 def show_boxplots(df: pd.DataFrame, layout: str = "separate"):
     """
@@ -91,4 +92,21 @@ def show_scatter_matrix(df: pd.DataFrame, figsize: tuple = (12, 12), diagonal: s
         return
     scatter_matrix(df[numeric_cols], figsize=figsize, diagonal=diagonal)
     plt.suptitle("Scatter Matrix of Numeric Features")
+    plt.show()
+
+def show_correlation_heatmap(df: pd.DataFrame):
+    """
+    Displays a heatmap of the correlation matrix for numeric columns.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+    """
+    numeric_cols = df.select_dtypes(include="number").columns
+    if len(numeric_cols) < 2:
+        print("Correlation heatmap requires at least two numeric columns.")
+        return
+    corr = df[numeric_cols].corr()
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f")
+    plt.title('Correlation Matrix of Numeric Features')
     plt.show()
