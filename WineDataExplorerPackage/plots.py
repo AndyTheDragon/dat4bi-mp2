@@ -40,13 +40,17 @@ def show_boxplots(df: pd.DataFrame, layout: str = "separate"):
             plt.show()
 
 
-def show_histograms(df: pd.DataFrame, bins: int = 10, layout: str = "separate"):
+def show_histograms(df: pd.DataFrame, bins: int = 10, layout: str = "separate", bell_curve: bool = False):
     """
     Displays histograms for all numeric columns in the DataFrame.
+    Optionally overlays a normal distribution (bell curve) if bell_curve=True.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
         bins (int): Number of bins for histograms. Defaults to 10.
+        layout (str): 'separate' = one plot per column,
+                      'grid' = all plots in a grid.
+        bell_curve (bool): If True, overlays a normal distribution curve.
     """
     numeric_cols = df.select_dtypes(include="number").columns
 
@@ -57,9 +61,19 @@ def show_histograms(df: pd.DataFrame, bins: int = 10, layout: str = "separate"):
         axes = axes.flatten()
 
         for i, col in enumerate(numeric_cols):
-            df.hist(column=col, ax=axes[i])
+            data = df[col].dropna()
+            axes[i].hist(data, bins=bins, density=True, alpha=0.7, color='tab:blue', edgecolor='black')
+            if bell_curve:
+                import numpy as np
+                mu, std = data.mean(), data.std()
+                xmin, xmax = axes[i].get_xlim()
+                x = np.linspace(xmin, xmax, 100)
+                p = (1/(std * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / std) ** 2)
+                axes[i].plot(x, p, 'r', linewidth=2)
             axes[i].set_title(f'Histogram of {col}')
-            axes[i].set_ylabel(col)
+            axes[i].set_xlabel(col)
+            axes[i].set_ylabel('Density' if bell_curve else 'Frequency')
+            axes[i].grid(True)
 
         for j in range(i + 1, len(axes)):
             axes[j].axis("off")
@@ -69,10 +83,19 @@ def show_histograms(df: pd.DataFrame, bins: int = 10, layout: str = "separate"):
     else:
         for col in numeric_cols:
             plt.figure(figsize=(6, 4))
-            df[col].hist(bins=bins)
+            data = df[col].dropna()
+            plt.hist(data, bins=bins, density=True, alpha=0.7, color='tab:blue', edgecolor='black')
+            if bell_curve:
+                import numpy as np
+                mu, std = data.mean(), data.std()
+                xmin, xmax = plt.xlim()
+                x = np.linspace(xmin, xmax, 100)
+                p = (1/(std * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / std) ** 2)
+                plt.plot(x, p, 'r', linewidth=2)
             plt.title(f'Histogram of {col}')
             plt.xlabel(col)
-            plt.ylabel("Frequency")
+            plt.ylabel("Density" if bell_curve else "Frequency")
+            plt.grid(True)
             plt.tight_layout()
             plt.show()
 
