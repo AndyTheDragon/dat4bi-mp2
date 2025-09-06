@@ -132,3 +132,120 @@ def show_correlation_heatmap(df: pd.DataFrame):
     sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f")
     plt.title('Correlation Matrix of Numeric Features')
     plt.show()
+
+
+def show_grouped_histograms(
+    df: pd.DataFrame,
+    bins: int = 10,
+    layout: str = "separate",
+    category_col: str = "type",
+    bell_curve: bool = True,
+    max_cols: int = 3,
+    alpha: float = 0.7,
+):
+    """
+    Draw side-by-side histograms per category (default 'type') for all numeric columns.
+    Overlays a separate normal bell curve per category when bell_curve=True.
+
+    Args:
+        df: Input DataFrame.
+        bins: Number of bins.
+        layout: 'separate' (one figure per column) or 'grid' (subplot grid).
+        category_col: Categorical column to split by (default 'type').
+        bell_curve: Overlay per-category normal curves if True.
+        max_cols: Max columns per row in grid layout.
+        alpha: Bar transparency.
+    """
+    if category_col not in df.columns:
+        raise ValueError(f"Category column '{category_col}' not found in DataFrame.")
+
+    numeric_cols = [c for c in df.select_dtypes(include="number").columns if c != category_col]
+    if not numeric_cols:
+        print("No numeric columns to plot.")
+        return
+
+    cats = list(df[category_col].dropna().unique())
+    if len(cats) == 0:
+        print(f"No non-null categories found in '{category_col}'.")
+        return
+
+    # Color mapping per category
+    default_colors = plt.rcParams.get("axes.prop_cycle", None)
+    palette = (default_colors.by_key()["color"] if default_colors else ["C0", "C1", "C2", "C3"])
+    color_map = {cat: palette[i % len(palette)] for i, cat in enumerate(cats)}
+
+    def _plot_column(ax, col: str):
+        data_col = df[col].dropna().values
+        if data_col.size == 0:
+            ax.set_visible(False)
+            return
+
+        # Shared bin edges across categories
+        bin_edges = np.histogram_bin_edges(data_col, bins=bins)
+        k = max(1, len(cats))
+        # Width for each category inside each bin (handles variable-width bins)
+        bin_widths = np.diff(bin_edges)
+        width_each = bin_widths / k
+
+        handles = []
+        labels = []
+
+        for j, cat in enumerate(cats):
+            vals = df.loc[df[category_col] == cat, col].dropna().values
+            if vals.size == 0:
+                continue
+
+            counts, _ = np.histogram(vals, bins=bin_edges, density=True)  # density=True to match bell curves
+            lefts = bin_edges[:-1] + j * width_each
+            bar = ax.bar(
+                lefts,
+                counts,
+                width=width_each,
+                align="edge",
+                alpha=alpha,
+                edgecolor="black",
+                color=color_map[cat],
+                label=str(cat),
+            )
+            # Keep one handle per category for legend
+            handles.append(bar)
+            labels.append(str(cat))
+
+            if bell_curve:
+                mu = np.mean(vals)
+                std = np.std(vals, ddof=1)
+                if std > 0 and np.isfinite(std):
+                    x = np.linspace(bin_edges[0], bin_edges[-1], 200)
+                    pdf = (1.0 / (std * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / std) ** 2)
+                    ax.plot(x, pdf, color=color_map[cat], linewidth=2, alpha=0.9)
+
+        ax.set_title(f'Histogram of {col} by {category_col}')
+        ax.set_xlabel(col)
+        ax.set_ylabel('Density')
+        ax.grid(True, alpha=0.25)
+        if handles:
+            # Use category bars as legend entries
+            ax.legend([h for h in handles], labels, title=category_col)
+
+    if layout == "grid":
+        n = len(numeric_cols)
+        cols = max(1, min(max_cols, n))
+        rows = int(np.ceil(n / cols))
+        fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 4.5 * rows), squeeze=False)
+        flat_axes = axes.flatten()
+
+        for ax, col in zip(flat_axes, numeric_cols):
+            _plot_column(ax, col)
+
+        # Hide any extra axes
+        for i in range(len(numeric_cols), len(flat_axes)):
+            fig.delaxes(flat_axes[i])
+
+        plt.tight_layout()
+        plt.show()
+    else:
+        for col in numeric_cols:
+            fig, ax = plt.subplots(figsize=(6.5, 4.5))
+            _plot_column(ax, col)
+            plt.tight_layout()
+            plt.show()
