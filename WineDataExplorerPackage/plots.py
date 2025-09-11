@@ -249,3 +249,47 @@ def show_grouped_histograms(
             _plot_column(ax, col)
             plt.tight_layout()
             plt.show()
+
+def show_binned_data(
+    df: pd.DataFrame,
+    bins: int = 5,
+    column_to_bin: str = 'pH',
+    column_to_plot: str = 'density',
+    aggregation_method: str = 'mean'
+):
+    """
+    Plots aggregated values (mean or max) of `column_to_plot` grouped by bins of `column_to_bin`.
+
+    Args:
+        df: Input DataFrame.
+        bins: Number of bins for binning.
+        column_to_bin: Column to bin.
+        column_to_plot: Column to aggregate and plot.
+        aggregation_method: 'mean' or 'max' aggregation.
+    """
+    if column_to_bin not in df.columns or column_to_plot not in df.columns:
+        raise ValueError("Specified columns must be present in the DataFrame.")
+
+    binned_df = df[[column_to_bin, column_to_plot]].copy()
+    binned_df['bin'] = pd.cut(binned_df[column_to_bin], bins=bins)
+
+    if aggregation_method == 'max':
+        binned_vals = binned_df.groupby('bin')[column_to_plot].max()
+        agg_label = 'Max'
+    else:
+        binned_vals = binned_df.groupby('bin')[column_to_plot].mean()
+        agg_label = 'Mean'
+
+    plt.figure(figsize=(10, 6))
+    binned_vals.plot(kind='bar', color='skyblue')
+    plt.title(f'{agg_label} {column_to_plot} by {column_to_bin} Bin')
+    plt.xlabel(f'{column_to_bin} Bin')
+    plt.ylabel(f'{agg_label} {column_to_plot}')
+    plt.xticks(rotation=45)
+    plt.grid(axis='y')
+    plt.tight_layout()
+    plt.show()
+    return binned_vals
+
+
+
