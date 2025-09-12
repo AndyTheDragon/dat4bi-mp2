@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
 import seaborn as sns
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 def show_boxplots(df: pd.DataFrame, layout: str = "separate"):
     """
@@ -116,7 +117,13 @@ def show_scatter_matrix(df: pd.DataFrame, figsize: tuple = (12, 12), diagonal: s
     plt.suptitle("Scatter Matrix of Numeric Features")
     plt.show()
 
-def show_correlation_heatmap(df: pd.DataFrame):
+def show_correlation_heatmap(   
+    df: pd.DataFrame,
+    method: str = "pearson",        # 'pearson' | 'spearman' | 'kendall' | 'cov' (covariance)
+    figsize: tuple = (10, 8),
+    cmap: str = "coolwarm",
+    annot: bool = True,
+    title: str | None = None,):
     """
     Displays a heatmap of the correlation matrix for numeric columns.
 
@@ -127,10 +134,22 @@ def show_correlation_heatmap(df: pd.DataFrame):
     if len(numeric_cols) < 2:
         print("Correlation heatmap requires at least two numeric columns.")
         return
-    corr = df[numeric_cols].corr()
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f")
-    plt.title('Correlation Matrix of Numeric Features')
+    
+    if method.lower() in ("cov", "covariance"):
+        mat = df[numeric_cols].cov()
+        cbar_label = "Covariance"
+        vmin = vmax = None  # let covariance range naturally
+        default_title = "Covariance Matrix of Numeric Features"
+    else:
+        mat = df[numeric_cols].corr(method=method)
+        cbar_label = f"{method.title()} Correlation"
+        vmin, vmax = -1.0, 1.0
+        default_title = f"{method.title()} Correlation Matrix of Numeric Features"
+
+    plt.figure(figsize=figsize)
+    ax = sns.heatmap(mat, annot=annot, cmap=cmap, fmt=".2f", vmin=vmin, vmax=vmax, cbar_kws={"label": cbar_label})
+    ax.set_title(title or default_title)
+    plt.tight_layout()
     plt.show()
 
 
@@ -291,5 +310,46 @@ def show_binned_data(
     plt.show()
     return binned_vals
 
+def normalize_data_seperated(
+        red_df: pd.DataFrame,
+    white_df: pd.DataFrame,
+    method: str = "minmax",           # "minmax" or "standard"
+    exclude: list[str] | None = None, # e.g., ["quality"] if it's a target
+    suffix: str | None = None         # default based on method
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Scale all numeric columns in red_df and white_df separately and return ONLY the
+    normalized columns (original columns are NOT kept).
 
+    Returns:
+        (red_wine_scaled_only, white_wine_scaled_only)
+    """
+    if exclude is None:
+        exclude = []
+
+    method = method.lower()
+    if method not in ("minmax", "standard"):
+        raise ValueError("method must be 'minmax' or 'standard'.")
+
+    scaler_cls = MinMaxScaler if method == "minmax" else StandardScaler
+    if suffix is None:
+        suffix = "_minmax" if method == "minmax" else "_z"
+
+    def _scale_one(df: pd.DataFrame) -> pd.DataFrame:
+        if df is None or df.empty:
+            return pd.DataFrame(index=getattr(df, "index", None))
+        features = df.select_dtypes(include="number").columns.tolist()
+        features = [c for c in features if c not in exclude]
+        if not features:
+            # No numeric features to scale -> return empty DataFrame with same index
+            return pd.DataFrame(index=df.index)
+
+        scaler = scaler_cls()
+        vals = scaler.fit_transform(df[features])
+        scaled_cols = [f"{c}{suffix}" for c in features]
+        return pd.DataFrame(vals, columns=scaled_cols, index=df.index)
+
+    red_scaled = _scale_one(red_df)
+    white_scaled = _scale_one(white_df)
+    return red_scaled, white_scaled
 
