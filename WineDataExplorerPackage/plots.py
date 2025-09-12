@@ -353,3 +353,107 @@ def normalize_data_seperated(
     white_scaled = _scale_one(white_df)
     return red_scaled, white_scaled
 
+def show_grouped_boxplots(
+    df: pd.DataFrame,
+    layout: str = "grid",  # 'separate' or 'grid'
+    category_col: str = "type",
+    max_cols: int = 3,
+    showfliers: bool = True,
+    notch: bool = False,
+    orient: str | None = None,  # 'v' (vertical), 'h' (horizontal), or None to auto
+):
+    """
+    Draws grouped boxplots per category (default 'type') for all numeric columns.
+
+    Args:
+        df: Input DataFrame.
+        layout: 'separate' (one figure per column) or 'grid' (subplot grid).
+        category_col: Categorical column to split by (default 'type').
+        max_cols: Max columns per row in grid layout.
+        showfliers: Show outlier points.
+        notch: Use notched boxes.
+        orient: 'v' (vertical) or 'h' (horizontal). If None, auto-chooses based on #categories.
+        palette: Optional dict {category: color} to override colors; if None, uses default cycle.
+    """
+    if category_col not in df.columns:
+        raise ValueError(f"Category column '{category_col}' not found in DataFrame.")
+
+    numeric_cols = [c for c in df.select_dtypes(include="number").columns if c != category_col]
+    if not numeric_cols:
+        print("No numeric columns to plot.")
+        return
+
+    cats = list(df[category_col].dropna().unique())
+    if len(cats) == 0:
+        print(f"No non-null categories found in '{category_col}'.")
+        return
+
+    # Auto orientation if not specified
+    _orient = orient if orient in ("v", "h") else ("h" if len(cats) > 6 else "v")
+
+    def _plot_column(ax, col: str):
+        if _orient == "h":
+            sns.boxplot(
+                data=df,
+                x=col,
+                y=category_col,
+                order=cats,
+                hue=category_col,
+                hue_order=cats,
+                dodge=False,
+                showfliers=showfliers,
+                notch=notch,
+                ax=ax,
+            )
+            leg = ax.get_legend()
+            if leg:
+                leg.remove()
+            ax.set_xlabel(col)
+            ax.set_ylabel(category_col)
+            ax.grid(True, axis="x", alpha=0.25)
+        else:
+            sns.boxplot(
+                data=df,
+                x=category_col,
+                y=col,
+                order=cats,
+                hue=category_col,
+                hue_order=cats,
+                dodge=False,
+                showfliers=showfliers,
+                notch=notch,
+                ax=ax,
+            )
+            leg = ax.get_legend()
+            if leg:
+                leg.remove()
+            ax.set_xlabel(category_col)
+            ax.set_ylabel(col)
+            ax.grid(True, axis="y", alpha=0.25)
+
+        ax.set_title(f'Boxplot of {col} by {category_col}')
+        if _orient == "v":
+            ax.tick_params(axis="x", rotation=45 if len(cats) > 5 else 0)
+
+    if layout == "grid":
+        n = len(numeric_cols)
+        cols = max(1, min(max_cols, n))
+        rows = int(np.ceil(n / cols))
+        fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 4.5 * rows), squeeze=False)
+        flat_axes = axes.flatten()
+
+        for ax, col in zip(flat_axes, numeric_cols):
+            _plot_column(ax, col)
+
+        # Hide any extra axes
+        for i in range(len(numeric_cols), len(flat_axes)):
+            fig.delaxes(flat_axes[i])
+
+        plt.tight_layout()
+        plt.show()
+    else:
+        for col in numeric_cols:
+            fig, ax = plt.subplots(figsize=(6.5, 4.5))
+            _plot_column(ax, col)
+            plt.tight_layout()
+            plt.show()
