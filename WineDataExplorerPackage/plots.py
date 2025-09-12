@@ -293,10 +293,10 @@ def show_binned_data(
     binned_df['bin'] = pd.cut(binned_df[column_to_bin], bins=bins)
 
     if aggregation_method == 'max':
-        binned_vals = binned_df.groupby('bin')[column_to_plot].max()
+        binned_vals = binned_df.groupby('bin', observed=True)[column_to_plot].max()
         agg_label = 'Max'
     else:
-        binned_vals = binned_df.groupby('bin')[column_to_plot].mean()
+        binned_vals = binned_df.groupby('bin', observed=True)[column_to_plot].mean()
         agg_label = 'Mean'
 
     plt.figure(figsize=(10, 6))
