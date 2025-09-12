@@ -18,15 +18,23 @@ Overall, the analysis provides a clear comparison between red and white wines, h
 Contains functions to read the data from the Excel (xlsx) files into a Pandas Dataframe, doing some basic cleaning, like checking for missing or NaN values. And then a lot of functions to create different representations of the descriptive statistics and other analysis of the data.
 
 ### Reading (and cleaning) the data
-`read_data_to_dataframe(file_path, winetype) -> pd.DataFrame`
+```python
+read_data_to_dataframe(file_path, winetype) -> pd.DataFrame
+```
 Reads the Excel file, checks for missing values and returns a Datafram
-`combine_dataframes(dfs) -> pd.DataFrame`
+```python
+combine_dataframes(dfs) -> pd.DataFrame
+```
 Combines a list of Dataframes into a single Datafram
-`remove_duplicates(df: pd.DataFrame) -> pd.DataFrame`
+```python
+remove_duplicates(df: pd.DataFrame) -> pd.DataFrame
+```
 Removes duplicate entries from the dataframe
 
 ### Descriptive statistics
-`describe_wine_data(df: pd.DataFrame, verbose: bool = True, round_digits: int = 0) -> pd.DataFrame`
+```python
+describe_wine_data(df: pd.DataFrame, verbose: bool = True, round_digits: int = 0) -> pd.DataFrame
+```
 Prints a table of the most commonly descriptive statistical markers for each column in the Dataframe, also returns the statics as a Dataframe, in case further computation is necessary.
 
 ### Plots
